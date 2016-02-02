@@ -9,8 +9,7 @@
 	var defaultOptions = {
 		attrkey: '$',
 		charkey: '_',
-		normalize: false,
-		explicitArray: false
+		normalize: false
 	};
 
 	// extracted from jquery
@@ -57,16 +56,17 @@
 		}
 
 		// element content
-		if (xml.childElementCount === 0) {
-			result[options.charkey] = normalize(xml.textContent, options);
+		if ($(xml).children().length === 0) {
+			result[options.charkey] = normalize($(xml).text(), options);
 		}
 
 		for (i = 0; i < xml.childNodes.length; i++) {
 			node = xml.childNodes[i];
 			if (node.nodeType === 1) {
+				var $node = $(node);
 
-				if (node.attributes.length === 0 && node.childElementCount === 0){
-					child = normalize(node.textContent, options);
+				if (node.attributes.length === 0 && $node.children().length === 0){
+					child = normalize($node.text(), options);
 				} else {
 					child = xml2jsonImpl(node, options);
 				}
@@ -75,13 +75,11 @@
 				if (result.hasOwnProperty(name)) {
 					// For repeating elements, cast/promote the node to array
 					var val = result[name];
-					if (!Array.isArray(val)) {
+					if (!$.isArray(val)) {
 						val = [val];
 						result[name] = val;
 					}
 					val.push(child);
-				} else if(options.explicitArray === true) {
-					result[name] = [child];
 				} else {
 					result[name] = child;
 				}
@@ -97,19 +95,11 @@
 	 * @param xml
 	 */
 	function xml2json(xml, options) {
-		var n;
-
 		if (!xml) {
 			return xml;
 		}
 
-		options = options || {};
-
-		for(n in defaultOptions) {
-			if(defaultOptions.hasOwnProperty(n) && options[n] === undefined) {
-				options[n] = defaultOptions[n];
-			}
-		}
+		options = options || defaultOptions;
 
 		if (typeof xml === 'string') {
 			xml = parseXML(xml).documentElement;
@@ -118,8 +108,8 @@
 		var root = {};
 		if (typeof xml.attributes === 'undefined' || xml.attributes === null) {
 			root[xml.nodeName] = xml2jsonImpl(xml, options);
-		} else if (xml.attributes && xml.attributes.length === 0 && xml.childElementCount === 0){
-			root[xml.nodeName] = normalize(xml.textContent, options);
+		} else if (xml.attributes.length === 0 && $(xml).children().length === 0){
+			root[xml.nodeName] = normalize($(xml).text(), options);
 		} else {
 			root[xml.nodeName] = xml2jsonImpl(xml, options);
 		}
